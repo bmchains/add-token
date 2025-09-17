@@ -8,7 +8,7 @@
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
     .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     h1{font-size:22px;margin:0 0 12px}
-    p{opacity:.9;line-height:1.5}
+    p{opacity:.9;line-height:1.5;margin:10px 0}
     .row{display:flex;gap:14px;align-items:center;margin:14px 0 22px}
     .logo{width:48px;height:48px;border-radius:12px;border:1px solid #2a2f4a;object-fit:cover}
     code{background:#0b0f24;border:1px solid #263056;border-radius:10px;padding:6px 8px}
@@ -18,13 +18,13 @@
     .stack{display:flex;gap:10px;flex-wrap:wrap}
     a.btn{display:inline-block;text-decoration:none}
     .warn{background:#271a00;color:#ffd27a;border:1px solid #6b4e00;border-radius:12px;padding:10px 12px;margin-top:14px}
-    .err{background:#2a0c0c;color:#ffb3b3;border:1px solid #742a2a;border-radius:12px;padding:10px 12px;margin-top:14px}
     .ok{background:#0e2a1a;color:#b9ffd8;border:1px solid #1d6b49;border-radius:12px;padding:10px 12px;margin-top:14px}
   </style>
 </head>
 <body>
   <div class="card">
     <h1>➕ Add <b>USDC_</b> (BNB Smart Chain)</h1>
+
     <div class="row">
       <img class="logo" src="https://mint-club-v2.s3.us-west-2.amazonaws.com/56/0x79A732134dE432f75c5fAda6102aa99d5B2C3ACD/logo.jpeg" alt="token" />
       <div>
@@ -39,9 +39,14 @@
       <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
     </div>
 
-    <div id="status" class="warn" style="display:none"></div>
+    <p class="muted">
+      Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>BNB Smart Chain</b>.
+    </p>
+    <p class="warn" id="mobileTip" style="display:none">
+      Tip: On phones, open this page inside the <b>MetaMask</b> in-app browser (Browser tab), then tap <b>Add to MetaMask</b>.
+    </p>
 
-    <p class="muted">Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>BNB Smart Chain</b>.</p>
+    <div id="status" class="ok" style="display:none"></div>
   </div>
 
   <script>
@@ -60,15 +65,18 @@
       blockExplorerUrls: ["https://bscscan.com"]
     };
 
-    const st = (msg, cls="warn") => {
+    const eth = window.ethereum;
+    const st = (msg) => {
       const el = document.getElementById("status");
       el.textContent = msg;
-      el.className = cls;
       el.style.display = "block";
       console.log("[STATUS]", msg);
     };
 
-    const eth = window.ethereum;
+    // Show mobile tip if on iOS/Android
+    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      document.getElementById("mobileTip").style.display = "block";
+    }
 
     async function ensureBsc() {
       const current = await eth.request({ method: "eth_chainId" });
@@ -86,42 +94,41 @@
     }
 
     async function connect() {
-      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.", "err");
+      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
       try {
         const accounts = await eth.request({ method: "eth_requestAccounts" });
-        st("Connected: " + accounts[0], "ok");
+        st("Connected: " + accounts[0]);
       } catch {
-        st("User rejected connection or an error occurred.", "err");
+        st("User rejected connection or an error occurred.");
       }
     }
 
     async function addToken() {
-      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.", "err");
+      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
       try {
         await ensureBsc();
         const added = await eth.request({
           method: "wallet_watchAsset",
           params: { type: "ERC20", options: TOKEN }
         });
-        if (added) st("USDC_ added to your wallet ✅", "ok");
-        else st("User dismissed the add-token prompt.", "warn");
+        st(added ? "USDC_ added to your wallet ✅" : "User dismissed the add-token prompt.");
       } catch (e) {
-        st(e?.message || "Failed to add token", "err");
+        st(e?.message || "Failed to add token");
       }
     }
 
     document.getElementById("connectBtn").addEventListener("click", connect);
     document.getElementById("addTokenBtn").addEventListener("click", addToken);
 
-    // Deep link for MetaMask Mobile (with chainId)
+    // Clean mobile deep link (no image param)
     const params = new URLSearchParams({
       address: TOKEN.address,
       symbol: TOKEN.symbol,
       decimals: String(TOKEN.decimals),
-      chainId: "56",
-      image: TOKEN.image
+      chainId: "56"
     });
-    document.getElementById("mobileLink").href = "https://metamask.app.link/add-token?" + params.toString();
+    document.getElementById("mobileLink").href =
+      "https://metamask.app.link/add-token?" + params.toString();
   </script>
 </body>
 </html>
