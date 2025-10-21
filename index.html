@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Add USDC_ (BSC) — One-Click</title>
+  <title>Add DEM1 (Polygon POS) — One-Click</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
     .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
@@ -23,13 +23,13 @@
 </head>
 <body>
   <div class="card">
-    <h1>➕ Add <b>USDC_</b> (BNB Smart Chain)</h1>
+    <h1>➕ Add <b>DEM1</b> (Polygon POS)</h1>
 
     <div class="row">
-      <img class="logo" src="https://mint-club-v2.s3.us-west-2.amazonaws.com/56/0x79A732134dE432f75c5fAda6102aa99d5B2C3ACD/logo.jpeg" alt="token" />
+      <img class="logo" src="https://bafybeiecm5mnzxdja2mfeasfg2t2mw5avxwfwl4fo22e5owfgkxmwk6ode.ipfs.dweb.link/?filename=QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi" alt="token" />
       <div>
-        <div><span class="muted">Address:</span> <code>0x79A732134dE432f75c5fAda6102aa99d5B2C3ACD</code></div>
-        <div><span class="muted">Symbol:</span> <code>USDC_</code> &nbsp; <span class="muted">Decimals:</span> <code>18</code></div>
+        <div><span class="muted">Address:</span> <code>0x4Bd9F54998193279639Cb8DfBc4ac7c23c46Bcb7</code></div>
+        <div><span class="muted">Symbol:</span> <code>DEM</code> &nbsp; <span class="muted">Decimals:</span> <code>18</code></div>
       </div>
     </div>
 
@@ -40,7 +40,7 @@
     </div>
 
     <p class="muted">
-      Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>BNB Smart Chain</b>.
+      Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>Polygon POS</b>.
     </p>
     <p class="warn" id="mobileTip" style="display:none">
       Tip: On phones, open this page inside the <b>MetaMask</b> in-app browser (Browser tab), then tap <b>Add to MetaMask</b>.
@@ -51,18 +51,18 @@
 
   <script>
     const TOKEN = {
-      address: "0x79A732134dE432f75c5fAda6102aa99d5B2C3ACD",
-      symbol: "USDC_",
+      address: "0x4Bd9F54998193279639Cb8DfBc4ac7c23c46Bcb7",
+      symbol: "DEM",
       decimals: 18,
-      image: "https://mint-club-v2.s3.us-west-2.amazonaws.com/56/0x79A732134dE432f75c5fAda6102aa99d5B2C3ACD/logo.jpeg"
+      image: "https://bafybeiecm5mnzxdja2mfeasfg2t2mw5avxwfwl4fo22e5owfgkxmwk6ode.ipfs.dweb.link/?filename=QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
     };
 
-    const BSC = {
-      chainId: "0x38",
-      chainName: "BNB Smart Chain",
-      nativeCurrency: { name: "BNB", symbol: "BNB", decimals: 18 },
-      rpcUrls: ["https://bsc-dataseed.binance.org"],
-      blockExplorerUrls: ["https://bscscan.com"]
+    const POLYGON = {
+      chainId: "0x89",
+      chainName: "Polygon POS",
+      nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
+      rpcUrls: ["https://polygon-rpc.com"],
+      blockExplorerUrls: ["https://polygonscan.com"]
     };
 
     const eth = window.ethereum;
@@ -73,19 +73,18 @@
       console.log("[STATUS]", msg);
     };
 
-    // Show mobile tip if on iOS/Android
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
       document.getElementById("mobileTip").style.display = "block";
     }
 
-    async function ensureBsc() {
+    async function ensurePolygon() {
       const current = await eth.request({ method: "eth_chainId" });
-      if (current !== BSC.chainId) {
+      if (current !== POLYGON.chainId) {
         try {
-          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: BSC.chainId }] });
+          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON.chainId }] });
         } catch (err) {
           if (err && err.code === 4902) {
-            await eth.request({ method: "wallet_addEthereumChain", params: [BSC] });
+            await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON] });
           } else {
             throw err;
           }
@@ -106,12 +105,12 @@
     async function addToken() {
       if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
       try {
-        await ensureBsc();
+        await ensurePolygon();
         const added = await eth.request({
           method: "wallet_watchAsset",
           params: { type: "ERC20", options: TOKEN }
         });
-        st(added ? "USDC_ added to your wallet ✅" : "User dismissed the add-token prompt.");
+        st(added ? "DEM1 added to your wallet ✅" : "User dismissed the add-token prompt.");
       } catch (e) {
         st(e?.message || "Failed to add token");
       }
@@ -120,12 +119,11 @@
     document.getElementById("connectBtn").addEventListener("click", connect);
     document.getElementById("addTokenBtn").addEventListener("click", addToken);
 
-    // Clean mobile deep link (no image param)
     const params = new URLSearchParams({
       address: TOKEN.address,
       symbol: TOKEN.symbol,
       decimals: String(TOKEN.decimals),
-      chainId: "56"
+      chainId: "137"
     });
     document.getElementById("mobileLink").href =
       "https://metamask.app.link/add-token?" + params.toString();
