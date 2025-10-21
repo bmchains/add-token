@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Add DEM1 (Polygon POS) — One-Click</title>
+  <title>Add DME1 (Polygon POS) — One-Click</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
     .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
@@ -23,13 +23,13 @@
 </head>
 <body>
   <div class="card">
-    <h1>➕ Add <b>DEM1</b> (Polygon POS)</h1>
+    <h1>➕ Add <b>DME1</b> (Polygon POS)</h1>
 
     <div class="row">
       <img class="logo" src="https://bafybeiecm5mnzxdja2mfeasfg2t2mw5avxwfwl4fo22e5owfgkxmwk6ode.ipfs.dweb.link/?filename=QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi" alt="token" />
       <div>
         <div><span class="muted">Address:</span> <code>0x4Bd9F54998193279639Cb8DfBc4ac7c23c46Bcb7</code></div>
-        <div><span class="muted">Symbol:</span> <code>DEM</code> &nbsp; <span class="muted">Decimals:</span> <code>18</code></div>
+        <div><span class="muted">Symbol:</span> <code>DME</code> &nbsp; <span class="muted">Decimals:</span> <code>2</code></div>
       </div>
     </div>
 
@@ -52,8 +52,8 @@
   <script>
     const TOKEN = {
       address: "0x4Bd9F54998193279639Cb8DfBc4ac7c23c46Bcb7",
-      symbol: "DEM",
-      decimals: 18,
+      symbol: "DME",
+      decimals: 2,
       image: "https://bafybeiecm5mnzxdja2mfeasfg2t2mw5avxwfwl4fo22e5owfgkxmwk6ode.ipfs.dweb.link/?filename=QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
     };
 
@@ -110,7 +110,7 @@
           method: "wallet_watchAsset",
           params: { type: "ERC20", options: TOKEN }
         });
-        st(added ? "DEM1 added to your wallet ✅" : "User dismissed the add-token prompt.");
+        st(added ? "DME1 added to your wallet ✅" : "User dismissed the add-token prompt.");
       } catch (e) {
         st(e?.message || "Failed to add token");
       }
