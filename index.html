@@ -70,23 +70,40 @@
     }
 
     async function connect() {
-      if (!solana) return st("No Solana wallet detected. Please install Phantom or Sollet.");
+      if (!solana) {
+        st("No Solana wallet detected. Please install Phantom or Sollet.");
+        return;
+      }
       try {
         const accounts = await solana.request({ method: "solana_requestAccounts" });
         st("Connected to Solana wallet: " + accounts[0]);
-      } catch {
-        st("User rejected wallet connection or an error occurred.");
+      } catch (err) {
+        st("User rejected wallet connection or an error occurred: " + err.message);
       }
     }
 
     async function addToken() {
-      if (!solana) return st("No Solana wallet detected. Please install Phantom or Sollet.");
+      if (!solana) {
+        st("No Solana wallet detected. Please install Phantom or Sollet.");
+        return;
+      }
       try {
-        const added = await solana.request({
+        // Phantom wallet requires a custom method for adding a token
+        const result = await solana.request({
           method: "solana_addToken",
-          params: [TOKEN.address, TOKEN.symbol, TOKEN.decimals, TOKEN.image]
+          params: {
+            tokenAddress: TOKEN.address,
+            tokenSymbol: TOKEN.symbol,
+            tokenDecimals: TOKEN.decimals,
+            tokenImage: TOKEN.image
+          }
         });
-        st(added ? "Token added to Solana wallet ✅" : "User dismissed the add-token prompt.");
+
+        if (result) {
+          st("Token added to Solana wallet ✅");
+        } else {
+          st("User dismissed the add-token prompt.");
+        }
       } catch (e) {
         st(e?.message || "Failed to add token to Solana wallet");
       }
