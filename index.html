@@ -2,11 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Add The USD — MetaMask (Solana)</title>
+  <title>Add DME (Polygon) — One-Click</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
-    .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:760px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     h1{font-size:22px;margin:0 0 12px}
     p{opacity:.9;line-height:1.5;margin:10px 0}
     .row{display:flex;gap:14px;align-items:center;margin:14px 0 22px}
@@ -18,122 +22,139 @@
     .stack{display:flex;gap:10px;flex-wrap:wrap}
     a.btn{display:inline-block;text-decoration:none}
     .ok{background:#0e2a1a;color:#b9ffd8;border:1px solid #1d6b49;border-radius:12px;padding:10px 12px;margin-top:14px;display:none}
-    .warn{background:#271a00;color:#ffd27a;border:1px solid #6b4e00;border-radius:12px;padding:10px 12px;margin-top:14px}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>➕ Add <b>The USD</b> to MetaMask (Solana)</h1>
+    <h1>➕ Add <b>DME</b> (Polygon)</h1>
 
     <div class="row">
-      <img class="logo" src="https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo" alt="logo" />
+      <img class="logo" src="https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi" alt="token" />
       <div>
-        <div><span class="muted">Mint:</span> <code id="mint">DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf</code></div>
-        <div><span class="muted">Name:</span> <code>The USD</code> &nbsp; <span class="muted">Symbol:</span> <code>U S D T</code> &nbsp; <span class="muted">Decimals:</span> <code>6</code></div>
+        <div><span class="muted">Address:</span> <code>0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1</code></div>
+        <div><span class="muted">Symbol:</span> <code>DME</code> &nbsp; <span class="muted">Decimals:</span> <code>8</code></div>
       </div>
     </div>
 
     <div class="stack">
-      <button id="install" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Install/Enable Solana Snap</button>
-      <button id="connect" class="btn">Connect (get Public Key)</button>
-      <button id="track" class="btn">Track in Explorer</button>
-      <button id="copy" class="btn" style="background:#0aa56b;border-color:#33c28c">Copy Mint</button>
+      <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect MetaMask</button>
+      <button id="addTokenBtn" class="btn">Add to MetaMask</button>
+      <a id="mobileLink" class="btn" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
     </div>
 
-    <p class="muted" style="margin-top:12px">
-      MetaMask (Solana Snap) shows SPL tokens once you <b>track</b> them or after you hold a balance.
-      This page helps you enable the Snap, connect, and track the token with its logo URL.
-    </p>
-
+    <p class="muted">If prompted, this page will switch your wallet to <b>Polygon POS</b>.</p>
     <div id="status" class="ok"></div>
-    <p id="tip" class="warn" style="display:none">Tip: On phones, open this page inside the MetaMask in-app browser.</p>
   </div>
 
   <script>
-    const MINT = "DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf";
-    const LOGO = "https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo";
-    const SNAP_ID = "npm:@metamask/solana-snap";
+    const POLYGON = {
+      chainId: "0x89",
+      chainName: "Polygon POS",
+      nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
+      rpcUrls: ["https://polygon-rpc.com"],
+      blockExplorerUrls: ["https://polygonscan.com"]
+    };
 
-    const st = (m)=>{ const el = document.getElementById("status"); el.textContent = m; el.style.display="block"; console.log("[STATUS]", m); };
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) document.getElementById("tip").style.display = "block";
+    const TOKEN = {
+      address: "0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1",
+      symbol: "DME",
+      decimals: 8,
+      image: "https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
+    };
 
-    function mm() {
-      if (!window.ethereum) { st("MetaMask not detected."); return null; }
-      return window.ethereum;
-    }
+    const eth = window.ethereum;
+    const st = (m)=>{ const el=document.getElementById("status"); el.textContent=m; el.style.display="block"; console.log("[STATUS]",m); };
 
-    async function getSnaps(eth) {
-      try { return await eth.request({ method: "wallet_getSnaps" }); }
-      catch(e){ st("wallet_getSnaps failed: " + (e?.message||e)); return {}; }
-    }
-
-    async function ensureSnap() {
-      const eth = mm(); if (!eth) return;
-      try {
-        // Request the Solana Snap with mainnet config.
-        await eth.request({
-          method: "wallet_requestSnaps",
-          params: {
-            [SNAP_ID]: {
-              version: "^1.0.0",
-              // The Solana snap reads network internally; most builds default to mainnet-beta.
-              // If your snap build supports params, they'd go here.
-            }
+    async function ensurePolygon() {
+      const current = await eth.request({ method: "eth_chainId" });
+      if (current !== POLYGON.chainId) {
+        try {
+          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON.chainId }] });
+        } catch (err) {
+          if (err && err.code === 4902) {
+            await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON] });
+          } else {
+            throw err;
           }
-        });
-        const snaps = await getSnaps(eth);
-        if (Object.values(snaps).some(s => s.id === SNAP_ID)) {
-          st("Solana Snap installed/enabled ✅");
-        } else {
-          st("Could not verify Solana Snap installation.");
         }
-      } catch (e) {
-        st("Failed to install/enable snap: " + (e?.message || e));
       }
     }
 
-    async function connectSnap() {
-      const eth = mm(); if (!eth) return;
-      try {
-        // Many Solana Snap builds expose one of these method names. Try a few safely.
-        const tryInvoke = async (method) => {
-          return await eth.request({
-            method: "wallet_invokeSnap",
-            params: { snapId: SNAP_ID, request: { method } }
-          });
-        };
+    document.getElementById("connectBtn").onclick = async () => {
+      if (!eth) return st("Meta
+" content="width=device-width, initial-scale=1" />
+  <title>Add DME (Polygon) — One-Click</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
+    .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    h1{font-size:22px;margin:0 0 12px}
+    p{opacity:.9;line-height:1.5;margin:10px 0}
+    .row{display:flex;gap:14px;align-items:center;margin:14px 0 22px}
+    .logo{width:48px;height:48px;border-radius:12px;border:1px solid #2a2f4a;object-fit:cover}
+    code{background:#0b0f24;border:1px solid #263056;border-radius:10px;padding:6px 8px}
+    .btn{cursor:pointer;border:1px solid #44d19e;background:#19c37d;color:#08131a;padding:12px 16px;border-radius:12px;font-weight:700}
+    .btn:active{transform:translateY(1px)}
+    .muted{opacity:.7}
+    .stack{display:flex;gap:10px;flex-wrap:wrap}
+    a.btn{display:inline-block;text-decoration:none}
+    .ok{background:#0e2a1a;color:#b9ffd8;border:1px solid #1d6b49;border-radius:12px;padding:10px 12px;margin-top:14px;display:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>➕ Add <b>DME</b> (Polygon)</h1>
 
-        let res;
-        try { res = await tryInvoke("solana_getPublicKey"); }
-        catch { try { res = await tryInvoke("getPublicKey"); } catch {}
+    <div class="row">
+      <img class="logo" src="https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi" alt="token" />
+      <div>
+        <div><span class="muted">Address:</span> <code>0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1</code></div>
+        <div><span class="muted">Symbol:</span> <code>DME</code> &nbsp; <span class="muted">Decimals:</span> <code>8</code></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect MetaMask</button>
+      <button id="addTokenBtn" class="btn">Add to MetaMask</button>
+      <a id="mobileLink" class="btn" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
+    </div>
+
+    <p class="muted">If prompted, this page will switch your wallet to <b>Polygon POS</b>.</p>
+    <div id="status" class="ok"></div>
+  </div>
+
+  <script>
+    const POLYGON = {
+      chainId: "0x89",
+      chainName: "Polygon POS",
+      nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
+      rpcUrls: ["https://polygon-rpc.com"],
+      blockExplorerUrls: ["https://polygonscan.com"]
+    };
+
+    const TOKEN = {
+      address: "0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1",
+      symbol: "DME",
+      decimals: 8,
+      image: "https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
+    };
+
+    const eth = window.ethereum;
+    const st = (m)=>{ const el=document.getElementById("status"); el.textContent=m; el.style.display="block"; console.log("[STATUS]",m); };
+
+    async function ensurePolygon() {
+      const current = await eth.request({ method: "eth_chainId" });
+      if (current !== POLYGON.chainId) {
+        try {
+          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON.chainId }] });
+        } catch (err) {
+          if (err && err.code === 4902) {
+            await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON] });
+          } else {
+            throw err;
+          }
         }
-        if (res?.publicKey || res?.toString) {
-          const pk = res.publicKey || res.toString();
-          st("Connected. Public key: " + pk);
-        } else {
-          st("Connected to Solana Snap (no public key method found). You can still track the mint.");
-        }
-      } catch (e) {
-        st("Snap connect/invoke failed: " + (e?.message || e));
       }
     }
 
-    // Open Explorer where user can press Track/Add in MetaMask UI
-    function trackInExplorer() {
-      const url = "https://explorer.solana.com/address/" + MINT;
-      window.open(url, "_blank", "noopener");
-      st("Opened mint in Solana Explorer. In MetaMask (Solana), use 'Track/Add token' if prompted.");
-    }
-
-    async function copyMint() {
-      try { await navigator.clipboard.writeText(MINT); st("Mint copied."); }
-      catch { st("Mint: " + MINT); }
-    }
-
-    document.getElementById("install").onclick = ensureSnap;
-    document.getElementById("connect").onclick = connectSnap;
-    document.getElementById("track").onclick = trackInExplorer;
-    document.getElementById("copy").onclick = copyMint;
-  </script>
-</body>
-</html>
+    document.getElementById("connectBtn").onclick = async () => {
+      if (!eth) return st("Meta
