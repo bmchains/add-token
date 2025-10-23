@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Add DME1 (Polygon POS) — One-Click</title>
+  <title>Add The USD (Solana) — One-Click</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
     .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
@@ -23,27 +23,27 @@
 </head>
 <body>
   <div class="card">
-    <h1>➕ Add <b>DME1</b> (Polygon POS)</h1>
+    <h1>➕ Add <b>The USD</b> (Solana)</h1>
 
     <div class="row">
-      <img class="logo" src="https://bafybeiecm5mnzxdja2mfeasfg2t2mw5avxwfwl4fo22e5owfgkxmwk6ode.ipfs.dweb.link/?filename=QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi" alt="token" />
+      <img class="logo" src="https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo" alt="token" />
       <div>
-        <div><span class="muted">Address:</span> <code>0x4Bd9F54998193279639Cb8DfBc4ac7c23c46Bcb7</code></div>
-        <div><span class="muted">Symbol:</span> <code>DME</code> &nbsp; <span class="muted">Decimals:</span> <code>2</code></div>
+        <div><span class="muted">Address:</span> <code>DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf</code></div>
+        <div><span class="muted">Symbol:</span> <code>U S D T</code> &nbsp; <span class="muted">Decimals:</span> <code>6</code></div>
       </div>
     </div>
 
     <div class="stack">
       <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect Wallet</button>
-      <button id="addTokenBtn" class="btn">Add to MetaMask</button>
-      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
+      <button id="addTokenBtn" class="btn">Add to Phantom</button>
+      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in Phantom (mobile)</a>
     </div>
 
     <p class="muted">
-      Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>Polygon POS</b>.
+      Works on desktop wallets and Phantom mobile. If prompted, it will switch to <b>Solana</b>.
     </p>
     <p class="warn" id="mobileTip" style="display:none">
-      Tip: On phones, open this page inside the <b>MetaMask</b> in-app browser (Browser tab), then tap <b>Add to MetaMask</b>.
+      Tip: On phones, open this page inside the <b>Phantom</b> in-app browser (Browser tab), then tap <b>Add to Phantom</b>.
     </p>
 
     <div id="status" class="ok" style="display:none"></div>
@@ -51,21 +51,21 @@
 
   <script>
     const TOKEN = {
-      address: "0x4Bd9F54998193279639Cb8DfBc4ac7c23c46Bcb7",
-      symbol: "DME",
-      decimals: 2,
-      image: "https://bafybeiecm5mnzxdja2mfeasfg2t2mw5avxwfwl4fo22e5owfgkxmwk6ode.ipfs.dweb.link/?filename=QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
+      address: "DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf",
+      symbol: "U S D T",
+      decimals: 6,
+      image: "https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo"
     };
 
-    const POLYGON = {
-      chainId: "0x89",
-      chainName: "Polygon POS",
-      nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-      rpcUrls: ["https://polygon-rpc.com"],
-      blockExplorerUrls: ["https://polygonscan.com"]
+    const SOLANA = {
+      chainId: "0x1", // Mainnet Solana
+      chainName: "Solana",
+      nativeCurrency: { name: "SOL", symbol: "SOL", decimals: 9 },
+      rpcUrls: ["https://api.mainnet-beta.solana.com"],
+      blockExplorerUrls: ["https://explorer.solana.com"]
     };
 
-    const eth = window.ethereum;
+    const solana = window.solana;
     const st = (msg) => {
       const el = document.getElementById("status");
       el.textContent = msg;
@@ -77,14 +77,14 @@
       document.getElementById("mobileTip").style.display = "block";
     }
 
-    async function ensurePolygon() {
-      const current = await eth.request({ method: "eth_chainId" });
-      if (current !== POLYGON.chainId) {
+    async function ensureSolana() {
+      const current = await solana.request({ method: "solana_chainId" });
+      if (current !== SOLANA.chainId) {
         try {
-          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON.chainId }] });
+          await solana.request({ method: "wallet_switchSolanaChain", params: [{ chainId: SOLANA.chainId }] });
         } catch (err) {
           if (err && err.code === 4902) {
-            await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON] });
+            await solana.request({ method: "wallet_addSolanaChain", params: [SOLANA] });
           } else {
             throw err;
           }
@@ -93,9 +93,9 @@
     }
 
     async function connect() {
-      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
+      if (!solana) return st("No wallet detected. Open in Phantom mobile or install Phantom.");
       try {
-        const accounts = await eth.request({ method: "eth_requestAccounts" });
+        const accounts = await solana.request({ method: "solana_requestAccounts" });
         st("Connected: " + accounts[0]);
       } catch {
         st("User rejected connection or an error occurred.");
@@ -103,14 +103,14 @@
     }
 
     async function addToken() {
-      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
+      if (!solana) return st("No wallet detected. Open in Phantom mobile or install Phantom.");
       try {
-        await ensurePolygon();
-        const added = await eth.request({
+        await ensureSolana();
+        const added = await solana.request({
           method: "wallet_watchAsset",
-          params: { type: "ERC20", options: TOKEN }
+          params: { type: "SOL", options: TOKEN }
         });
-        st(added ? "DME1 added to your wallet ✅" : "User dismissed the add-token prompt.");
+        st(added ? "The USD added to your wallet ✅" : "User dismissed the add-token prompt.");
       } catch (e) {
         st(e?.message || "Failed to add token");
       }
@@ -123,10 +123,10 @@
       address: TOKEN.address,
       symbol: TOKEN.symbol,
       decimals: String(TOKEN.decimals),
-      chainId: "137"
+      chainId: "1"
     });
     document.getElementById("mobileLink").href =
-      "https://metamask.app.link/add-token?" + params.toString();
+      "https://phantom.app/add-token?" + params.toString();
   </script>
 </body>
 </html>
