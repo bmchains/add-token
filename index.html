@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Add The USD (Solana) — One-Click</title>
+  <title>Add The USD (Solana)</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
     .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
@@ -19,6 +19,9 @@
     a.btn{display:inline-block;text-decoration:none}
     .warn{background:#271a00;color:#ffd27a;border:1px solid #6b4e00;border-radius:12px;padding:10px 12px;margin-top:14px}
     .ok{background:#0e2a1a;color:#b9ffd8;border:1px solid #1d6b49;border-radius:12px;padding:10px 12px;margin-top:14px}
+    .select{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{border:1px solid #2a2f4a;border-radius:999px;padding:8px 12px;cursor:pointer;background:#0b0f24}
+    .pill.active{border-color:#19c37d}
   </style>
 </head>
 <body>
@@ -28,97 +31,117 @@
     <div class="row">
       <img class="logo" src="https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo" alt="token" />
       <div>
-        <div><span class="muted">Address:</span> <code>DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf</code></div>
+        <div><span class="muted">Mint:</span> <code id="mint">DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf</code></div>
         <div><span class="muted">Symbol:</span> <code>U S D T</code> &nbsp; <span class="muted">Decimals:</span> <code>6</code></div>
       </div>
     </div>
 
-    <div class="stack">
+    <p class="muted">Choose your wallet:</p>
+    <div id="walletList" class="select"></div>
+
+    <div class="stack" style="margin-top:14px">
       <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect Wallet</button>
-      <button id="addTokenBtn" class="btn">Add Token to Solana Wallet</button>
-      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in Phantom (mobile)</a>
+      <button id="trackBtn" class="btn">Open in Explorer (Track)</button>
+      <button id="copyBtn" class="btn" style="background:#0aa56b;border-color:#33c28c">Copy Mint</button>
     </div>
 
-    <p class="muted">
-      Works on desktop wallets and Solana-compatible mobile wallets (Phantom, Sollet, etc.).
-    </p>
-    <p class="warn" id="mobileTip" style="display:none">
-      Tip: On phones, open this page inside the <b>Phantom</b> or <b>Sollet</b> in-app browser, then tap <b>Add Token</b>.
+    <p class="muted" id="mobileTip" style="display:none">
+      Tip: On phones, open this page inside your wallet’s in-app browser (Phantom, Solflare, Backpack) for best results.
     </p>
 
     <div id="status" class="ok" style="display:none"></div>
   </div>
 
   <script>
+    // --- Config ---
     const TOKEN = {
-      address: "DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf",
+      mint: "DScwRVryd7ZjMGZFVpUR3i48bviJxnWDkxKGhV6cfsjf",
       symbol: "U S D T",
       decimals: 6,
       image: "https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo"
     };
 
-    const solana = window.solana;
+    // --- Helpers ---
     const st = (msg) => {
       const el = document.getElementById("status");
       el.textContent = msg;
       el.style.display = "block";
       console.log("[STATUS]", msg);
     };
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) document.getElementById("mobileTip").style.display = "block";
 
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      document.getElementById("mobileTip").style.display = "block";
+    // Detect installed wallets
+    const providers = [];
+    if (window.solana?.isPhantom) providers.push({ id:"phantom", name:"Phantom", connect: async () => {
+      const res = await window.solana.connect({ onlyIfTrusted: false });
+      return res.publicKey.toString();
+    }});
+    if (window.solflare) providers.push({ id:"solflare", name:"Solflare", connect: async () => {
+      await window.solflare.connect();
+      return window.solflare.publicKey?.toString();
+    }});
+    if (window.backpack) providers.push({ id:"backpack", name:"Backpack", connect: async () => {
+      const res = await window.backpack.connect();
+      return res.publicKey?.toString();
+    }});
+    // Fallback for Phantom provider alias (some browsers expose window.phantom?.solana)
+    if (!providers.length && window.phantom?.solana?.isPhantom) {
+      providers.push({ id:"phantom", name:"Phantom", connect: async () => {
+        const res = await window.phantom.solana.connect({ onlyIfTrusted:false });
+        return res.publicKey.toString();
+      }});
     }
 
-    async function connect() {
-      if (!solana) {
-        st("No Solana wallet detected. Please install Phantom or Sollet.");
+    // Render wallet pills
+    const walletList = document.getElementById("walletList");
+    let selected = providers[0]?.id || null;
+    function renderPills() {
+      walletList.innerHTML = "";
+      if (!providers.length) {
+        walletList.innerHTML = '<span class="muted">No Solana wallet detected. Install Phantom, Solflare, or Backpack.</span>';
+        return;
+      }
+      providers.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "pill" + (selected === p.id ? " active" : "");
+        div.textContent = p.name;
+        div.onclick = () => { selected = p.id; renderPills(); };
+        walletList.appendChild(div);
+      });
+    }
+    renderPills();
+
+    // Buttons
+    document.getElementById("connectBtn").onclick = async () => {
+      const wallet = providers.find(p => p.id === selected);
+      if (!wallet) {
+        st("No wallet found. Install Phantom / Solflare / Backpack.");
         return;
       }
       try {
-        const accounts = await solana.request({ method: "solana_requestAccounts" });
-        st("Connected to Solana wallet: " + accounts[0]);
-      } catch (err) {
-        st("User rejected wallet connection or an error occurred: " + err.message);
-      }
-    }
-
-    async function addToken() {
-      if (!solana) {
-        st("No Solana wallet detected. Please install Phantom or Sollet.");
-        return;
-      }
-      try {
-        const result = await solana.request({
-          method: "solana_addToken",
-          params: {
-            tokenAddress: TOKEN.address,
-            tokenSymbol: TOKEN.symbol,
-            tokenDecimals: TOKEN.decimals,
-            tokenImage: TOKEN.image
-          }
-        });
-
-        if (result) {
-          st("Token added to Solana wallet ✅");
-        } else {
-          st("User dismissed the add-token prompt.");
-        }
+        const pubkey = await wallet.connect();
+        st("Connected: " + pubkey);
       } catch (e) {
-        st(e?.message || "Failed to add token to Solana wallet");
+        st("Connection failed: " + (e?.message || e));
       }
-    }
+    };
 
-    document.getElementById("connectBtn").addEventListener("click", connect);
-    document.getElementById("addTokenBtn").addEventListener("click", addToken);
+    document.getElementById("trackBtn").onclick = () => {
+      // Open the mint on Solana Explorer so user can hit “Track/Add” in wallet
+      const url = "https://explorer.solana.com/address/" + TOKEN.mint;
+      window.open(url, "_blank", "noopener");
+      st("Opened mint in Explorer. Use your wallet’s 'Track/Add token' to follow it.");
+    };
 
-    const params = new URLSearchParams({
-      address: TOKEN.address,
-      symbol: TOKEN.symbol,
-      decimals: String(TOKEN.decimals),
-      chainId: "137"
-    });
-    document.getElementById("mobileLink").href =
-      "https://phantom.app.link/add-token?" + params.toString();
+    document.getElementById("copyBtn").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(TOKEN.mint);
+        st("Mint address copied to clipboard.");
+      } catch {
+        st("Mint: " + TOKEN.mint);
+      }
+    };
   </script>
 </body>
 </html>
