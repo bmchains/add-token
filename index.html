@@ -6,19 +6,19 @@
   <title>Add DME (Polygon) — One-Click</title>
   <style>
     body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
-    .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:780px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
     h1{font-size:22px;margin:0 0 12px}
-    p{opacity:.9;line-height:1.5;margin:10px 0}
     .row{display:flex;gap:14px;align-items:center;margin:14px 0 22px}
     .logo{width:48px;height:48px;border-radius:12px;border:1px solid #2a2f4a;object-fit:cover}
     code{background:#0b0f24;border:1px solid #263056;border-radius:10px;padding:6px 8px}
     .btn{cursor:pointer;border:1px solid #44d19e;background:#19c37d;color:#08131a;padding:12px 16px;border-radius:12px;font-weight:700}
     .btn:active{transform:translateY(1px)}
-    .muted{opacity:.7}
+    .muted{opacity:.85}
     .stack{display:flex;gap:10px;flex-wrap:wrap}
     a.btn{display:inline-block;text-decoration:none}
     .ok{background:#0e2a1a;color:#b9ffd8;border:1px solid #1d6b49;border-radius:12px;padding:10px 12px;margin-top:14px;display:none}
     .warn{background:#271a00;color:#ffd27a;border:1px solid #6b4e00;border-radius:12px;padding:10px 12px;margin-top:14px}
+    .diag{background:#0b0f24;border:1px solid #263056;border-radius:12px;padding:10px 12px;margin-top:14px;font-size:13px;line-height:1.5;white-space:pre-wrap}
   </style>
 </head>
 <body>
@@ -28,31 +28,39 @@
     <div class="row">
       <img class="logo" src="https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi" alt="token" />
       <div>
-        <div><span class="muted">Contract:</span>
-          <code id="addr">0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1</code></div>
-        <div><span class="muted">Symbol:</span> <code id="sym">DME</code>
-             &nbsp; <span class="muted">Decimals:</span> <code id="dec">8</code></div>
+        <div><span class="muted">Contract:</span> <code id="addr">0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1</code></div>
+        <div><span class="muted">Symbol:</span> <code id="sym">DME</code> &nbsp; <span class="muted">Decimals:</span> <code id="dec">8</code></div>
       </div>
     </div>
 
     <div class="stack">
       <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect MetaMask</button>
       <button id="addBtn" class="btn">Add to MetaMask</button>
-      <a id="mobileLink" class="btn" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
+      <a id="openInMM" class="btn" target="_blank" rel="noopener">Open this page in MetaMask</a>
+      <a id="mobileAdd" class="btn" target="_blank" rel="noopener">MetaMask Mobile: Add Token</a>
     </div>
 
-    <p class="muted">This uses MetaMask’s <code>wallet_watchAsset</code> on the Polygon network.</p>
-    <p id="mobileTip" class="warn" style="display:none">Tip: On phones, open this page inside the MetaMask in-app browser, then tap <b>Add to MetaMask</b>.</p>
+    <p class="muted">If clicks do nothing, you are likely **not in MetaMask**. Use “Open this page in MetaMask”.</p>
+    <p id="mobileTip" class="warn" style="display:none">Tip: On phones, open this page **inside the MetaMask in-app browser**.</p>
 
     <div id="status" class="ok"></div>
+    <div id="diag" class="diag"></div>
   </div>
 
   <script>
+    const STATUS = document.getElementById("status");
+    const setStatus = (m) => { STATUS.textContent = m; STATUS.style.display = "block"; console.log("[STATUS]", m); alertIfNeeded(m); };
+    const alertIfNeeded = (m) => { try { if (!window.ethereum) alert(m); } catch(_) {} };
+
+    const CONTRACT = document.getElementById("addr").textContent.trim();
+    const SYMBOL   = document.getElementById("sym").textContent.trim();
+    const DECIMALS = parseInt(document.getElementById("dec").textContent.trim(), 10);
+
     const TOKEN = {
-      address: document.getElementById("addr").textContent.trim(),
-      symbol:  document.getElementById("sym").textContent.trim(),
-      decimals: parseInt(document.getElementById("dec").textContent.trim(), 10),
-      image:   "https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
+      address: CONTRACT,
+      symbol: SYMBOL,
+      decimals: DECIMALS,
+      image: "https://ipfs.io/ipfs/QmX7h7PXze8yUrqCb3bHpYB8AxqUPpjytC8dVnkbBJaJKi"
     };
 
     const POLYGON = {
@@ -63,57 +71,66 @@
       blockExplorerUrls: ["https://polygonscan.com"]
     };
 
-    const eth = window.ethereum;
-    const st = (m)=>{ const el=document.getElementById("status"); el.textContent=m; el.style.display="block"; console.log("[STATUS]", m); };
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile) document.getElementById("mobileTip").style.display = "block";
 
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      document.getElementById("mobileTip").style.display = "block";
+    // Deep links
+    const currentURL = location.href; // host your file on https
+    document.getElementById("openInMM").href = "https://metamask.app.link/dapp/" + currentURL.replace(/^https?:\/\//,'');
+    const addQ = new URLSearchParams({ address: CONTRACT, symbol: SYMBOL, decimals: String(DECIMALS), chainId: "137" });
+    document.getElementById("mobileAdd").href = "https://metamask.app.link/add-token?" + addQ.toString();
+
+    // Diagnostics
+    async function diag() {
+      const d = document.getElementById("diag");
+      const eth = window.ethereum;
+      let info = {
+        hasEthereum: !!eth,
+        isMetaMask: eth?.isMetaMask || false,
+        providers: Array.isArray(eth?.providers) ? eth.providers.map(p => ({isMetaMask:p.isMetaMask})) : null,
+        userAgent: navigator.userAgent
+      };
+      try { if (eth) info.chainId = await eth.request({method:"eth_chainId"}); } catch(e){ info.chainId = "error: " + (e?.message||e); }
+      d.textContent = JSON.stringify(info, null, 2);
     }
+    diag();
 
-    async function ensurePolygon() {
+    async function ensurePolygon(eth) {
       const id = await eth.request({ method: "eth_chainId" });
       if (id !== POLYGON.chainId) {
         try {
           await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON.chainId }] });
         } catch (err) {
-          if (err && err.code === 4902) {
+          if (err?.code === 4902) {
             await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON] });
-          } else {
-            throw err;
-          }
+          } else { throw err; }
         }
       }
     }
 
     document.getElementById("connectBtn").onclick = async () => {
-      if (!eth) return st("MetaMask not detected.");
+      const eth = window.ethereum;
+      if (!eth) { setStatus("MetaMask not detected. Click “Open this page in MetaMask” first."); return; }
       try {
-        await ensurePolygon();
+        await ensurePolygon(eth);
         const [a] = await eth.request({ method: "eth_requestAccounts" });
-        st("Connected: " + a);
-      } catch (e) { st(e?.message || "Failed to connect"); }
+        setStatus("Connected: " + a);
+      } catch (e) { setStatus(e?.message || "Failed to connect"); }
+      diag();
     };
 
     document.getElementById("addBtn").onclick = async () => {
-      if (!eth) return st("MetaMask not detected.");
+      const eth = window.ethereum;
+      if (!eth) { setStatus("MetaMask not detected. Click “Open this page in MetaMask” first."); return; }
       try {
-        await ensurePolygon();
+        await ensurePolygon(eth);
         const ok = await eth.request({
           method: "wallet_watchAsset",
           params: { type: "ERC20", options: TOKEN }
         });
-        st(ok ? "DME added to MetaMask ✅" : "User dismissed the add-token prompt.");
-      } catch (e) { st(e?.message || "Failed to add token"); }
+        setStatus(ok ? "DME added to MetaMask ✅" : "User dismissed the add-token prompt.");
+      } catch (e) { setStatus(e?.message || "Failed to add token"); }
     };
-
-    // Deep-link for MetaMask Mobile
-    const q = new URLSearchParams({
-      address: TOKEN.address,
-      symbol: TOKEN.symbol,
-      decimals: String(TOKEN.decimals),
-      chainId: "137"
-    });
-    document.getElementById("mobileLink").href = "https://metamask.app.link/add-token?" + q.toString();
   </script>
 </body>
 </html>
