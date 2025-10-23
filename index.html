@@ -35,15 +35,15 @@
 
     <div class="stack">
       <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect Wallet</button>
-      <button id="addTokenBtn" class="btn">Add to MetaMask</button>
-      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
+      <button id="addTokenBtn" class="btn">Add Token to Solana Wallet</button>
+      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in Phantom (mobile)</a>
     </div>
 
     <p class="muted">
-      Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>Solana</b>.
+      Works on desktop wallets and Solana-compatible mobile wallets (Phantom, Sollet, etc.).
     </p>
     <p class="warn" id="mobileTip" style="display:none">
-      Tip: On phones, open this page inside the <b>MetaMask</b> in-app browser (Browser tab), then tap <b>Add to MetaMask</b>.
+      Tip: On phones, open this page inside the <b>Phantom</b> or <b>Sollet</b> in-app browser, then tap <b>Add Token</b>.
     </p>
 
     <div id="status" class="ok" style="display:none"></div>
@@ -57,15 +57,7 @@
       image: "https://ipfs.io/ipfs/QmUmhPL1ramHL3pNYqhBKknzwGvekNeTTXUtmyRNjsruQo"
     };
 
-    const SOLANA = {
-      chainId: "0x1", // Mainnet Solana
-      chainName: "Solana",
-      nativeCurrency: { name: "SOL", symbol: "SOL", decimals: 9 },
-      rpcUrls: ["https://api.mainnet-beta.solana.com"],
-      blockExplorerUrls: ["https://explorer.solana.com"]
-    };
-
-    const eth = window.ethereum;
+    const solana = window.solana;
     const st = (msg) => {
       const el = document.getElementById("status");
       el.textContent = msg;
@@ -77,42 +69,26 @@
       document.getElementById("mobileTip").style.display = "block";
     }
 
-    async function ensurePolygon() {
-      const current = await eth.request({ method: "eth_chainId" });
-      if (current !== SOLANA.chainId) {
-        try {
-          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SOLANA.chainId }] });
-        } catch (err) {
-          if (err && err.code === 4902) {
-            await eth.request({ method: "wallet_addEthereumChain", params: [SOLANA] });
-          } else {
-            throw err;
-          }
-        }
-      }
-    }
-
     async function connect() {
-      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
+      if (!solana) return st("No Solana wallet detected. Please install Phantom or Sollet.");
       try {
-        const accounts = await eth.request({ method: "eth_requestAccounts" });
-        st("Connected: " + accounts[0]);
+        const accounts = await solana.request({ method: "solana_requestAccounts" });
+        st("Connected to Solana wallet: " + accounts[0]);
       } catch {
-        st("User rejected connection or an error occurred.");
+        st("User rejected wallet connection or an error occurred.");
       }
     }
 
     async function addToken() {
-      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
+      if (!solana) return st("No Solana wallet detected. Please install Phantom or Sollet.");
       try {
-        await ensurePolygon();
-        const added = await eth.request({
-          method: "wallet_watchAsset",
-          params: { type: "ERC20", options: TOKEN }
+        const added = await solana.request({
+          method: "solana_addToken",
+          params: [TOKEN.address, TOKEN.symbol, TOKEN.decimals, TOKEN.image]
         });
-        st(added ? "The USD added to your wallet ✅" : "User dismissed the add-token prompt.");
+        st(added ? "Token added to Solana wallet ✅" : "User dismissed the add-token prompt.");
       } catch (e) {
-        st(e?.message || "Failed to add token");
+        st(e?.message || "Failed to add token to Solana wallet");
       }
     }
 
@@ -126,7 +102,7 @@
       chainId: "137"
     });
     document.getElementById("mobileLink").href =
-      "https://metamask.app.link/add-token?" + params.toString();
+      "https://phantom.app.link/add-token?" + params.toString();
   </script>
 </body>
 </html>
