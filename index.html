@@ -88,7 +88,6 @@
         return;
       }
       try {
-        // Phantom wallet requires a custom method for adding a token
         const result = await solana.request({
           method: "solana_addToken",
           params: {
