@@ -35,15 +35,15 @@
 
     <div class="stack">
       <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect Wallet</button>
-      <button id="addTokenBtn" class="btn">Add to Phantom</button>
-      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in Phantom (mobile)</a>
+      <button id="addTokenBtn" class="btn">Add to MetaMask</button>
+      <a class="btn" id="mobileLink" target="_blank" rel="noopener">Open in MetaMask (mobile)</a>
     </div>
 
     <p class="muted">
-      Works on desktop wallets and Phantom mobile. If prompted, it will switch to <b>Solana</b>.
+      Works on desktop wallets and MetaMask mobile. If prompted, it will switch to <b>Solana</b>.
     </p>
     <p class="warn" id="mobileTip" style="display:none">
-      Tip: On phones, open this page inside the <b>Phantom</b> in-app browser (Browser tab), then tap <b>Add to Phantom</b>.
+      Tip: On phones, open this page inside the <b>MetaMask</b> in-app browser (Browser tab), then tap <b>Add to MetaMask</b>.
     </p>
 
     <div id="status" class="ok" style="display:none"></div>
@@ -65,7 +65,7 @@
       blockExplorerUrls: ["https://explorer.solana.com"]
     };
 
-    const solana = window.solana;
+    const eth = window.ethereum;
     const st = (msg) => {
       const el = document.getElementById("status");
       el.textContent = msg;
@@ -77,14 +77,14 @@
       document.getElementById("mobileTip").style.display = "block";
     }
 
-    async function ensureSolana() {
-      const current = await solana.request({ method: "solana_chainId" });
+    async function ensurePolygon() {
+      const current = await eth.request({ method: "eth_chainId" });
       if (current !== SOLANA.chainId) {
         try {
-          await solana.request({ method: "wallet_switchSolanaChain", params: [{ chainId: SOLANA.chainId }] });
+          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SOLANA.chainId }] });
         } catch (err) {
           if (err && err.code === 4902) {
-            await solana.request({ method: "wallet_addSolanaChain", params: [SOLANA] });
+            await eth.request({ method: "wallet_addEthereumChain", params: [SOLANA] });
           } else {
             throw err;
           }
@@ -93,9 +93,9 @@
     }
 
     async function connect() {
-      if (!solana) return st("No wallet detected. Open in Phantom mobile or install Phantom.");
+      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
       try {
-        const accounts = await solana.request({ method: "solana_requestAccounts" });
+        const accounts = await eth.request({ method: "eth_requestAccounts" });
         st("Connected: " + accounts[0]);
       } catch {
         st("User rejected connection or an error occurred.");
@@ -103,12 +103,12 @@
     }
 
     async function addToken() {
-      if (!solana) return st("No wallet detected. Open in Phantom mobile or install Phantom.");
+      if (!eth) return st("No wallet detected. Open in MetaMask mobile or install MetaMask.");
       try {
-        await ensureSolana();
-        const added = await solana.request({
+        await ensurePolygon();
+        const added = await eth.request({
           method: "wallet_watchAsset",
-          params: { type: "SOL", options: TOKEN }
+          params: { type: "ERC20", options: TOKEN }
         });
         st(added ? "The USD added to your wallet ✅" : "User dismissed the add-token prompt.");
       } catch (e) {
@@ -123,10 +123,10 @@
       address: TOKEN.address,
       symbol: TOKEN.symbol,
       decimals: String(TOKEN.decimals),
-      chainId: "1"
+      chainId: "137"
     });
     document.getElementById("mobileLink").href =
-      "https://phantom.app/add-token?" + params.toString();
+      "https://metamask.app.link/add-token?" + params.toString();
   </script>
 </body>
 </html>
