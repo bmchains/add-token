@@ -3,106 +3,150 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Add DME (Polygon) — One-Click</title>
+  <title>One‑Click: Add Tenderly Mainnet (Virtual) RPC</title>
+  <meta name="description" content="One‑click button to add/switch to a Tenderly Virtual Mainnet RPC in EVM wallets like TokenPocket or MetaMask." />
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Helvetica,Arial,sans-serif;background:#0b1020;color:#e6e8ef;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0}
-    .card{background:#121732;border:1px solid #2a2f4a;border-radius:18px;padding:28px;max-width:720px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    h1{font-size:22px;margin:0 0 12px}
-    .row{display:flex;gap:14px;align-items:center;margin:14px 0 22px}
-    .logo{width:48px;height:48px;border-radius:12px;border:1px solid #2a2f4a;object-fit:cover}
-    code{background:#0b0f24;border:1px solid #263056;border-radius:10px;padding:6px 8px}
-    .btn{cursor:pointer;border:1px solid #44d19e;background:#19c37d;color:#08131a;padding:12px 16px;border-radius:12px;font-weight:700}
-    .btn:active{transform:translateY(1px)}
-    .muted{opacity:.85}
-    .stack{display:flex;gap:10px;flex-wrap:wrap}
-    a.btn{display:inline-block;text-decoration:none}
-    .ok{background:#0e2a1a;color:#b9ffd8;border:1px solid #1d6b49;border-radius:12px;padding:10px 12px;margin-top:14px;display:none}
+    :root{
+      --bg:#0b1020;--card:#121732;--text:#e6e8ef;--muted:#a6adcc;--accent:#6ee7ff;--line:#272c45;--ok:#20d37a;--warn:#ffd166;--err:#ff6b6b
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Sego e UI,Roboto,Inter,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .card{width:min(760px,92vw);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
+    h1{font-size:22px;margin:0 0 10px}
+    p{margin:6px 0 12px;line-height:1.55;color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 8px}
+    button{appearance:none;border:1px solid var(--line);background:#0f1430;color:var(--text);padding:12px 16px;border-radius:14px;font-weight:600;cursor:pointer}
+    button:hover{border-color:#3a4070}
+    .primary{background:linear-gradient(135deg,#3aa6ff,#7ef3ff);color:#071019;border-color:transparent}
+    .ghost{background:transparent}
+    code, .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace}
+    .kbd{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12px;color:var(--muted)}
+    .status{margin-top:14px;padding:12px;border:1px dashed var(--line);border-radius:12px;font-size:14px;min-height:48px;white-space:pre-wrap}
+    .ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:18px 0}
+    .foot{opacity:.75;font-size:12px}
+    .small{font-size:13px;color:var(--muted)}
+    .tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;margin-right:8px}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>➕ Add <b>DME</b> (Polygon)</h1>
+  <main class="card">
+    <h1>One‑Click: Add Tenderly Mainnet (Virtual) RPC</h1>
+    <p>This button attempts to add the RPC below to your EVM wallet (TokenPocket, MetaMask, Trust Wallet, etc.) via <span class="mono">wallet_addEthereumChain</span>. If your wallet already has Ethereum Mainnet, it will try to switch to it using this RPC. Works best in an in‑app DApp browser.</p>
 
     <div class="row">
-      <img class="logo" src="https://cloudflare-ipfs.com/ipfs/QmSy6MjU7nRPaj3J4JvdSn5HRcteWhPqKS2M3nqm7knhDQ?filename=DME-256x256.png" alt="logo" />
-      <div>
-        <div class="muted">Contract:</div>
-        <code id="addr">0x3c150513b36be4D2fcf779024729BBfF5F6CfBE1</code>
-        <div style="margin-top:6px"><span class="muted">Symbol:</span> <code id="sym">DME</code> &nbsp; <span class="muted">Decimals:</span> <code id="dec">8</code></div>
-      </div>
+      <span class="tag"><strong>Chain:</strong> Ethereum Mainnet (virtual)</span>
+      <span class="tag"><strong>Chain ID:</strong> 1 (0x1)</span>
+      <span class="tag"><strong>Symbol:</strong> ETH</span>
     </div>
 
-    <div class="stack">
-      <button id="connectBtn" class="btn" style="background:#4aa3ff;border-color:#88bfff;color:#06152b">Connect MetaMask</button>
-      <button id="addBtn" class="btn">Add to MetaMask</button>
-      <a id="mobileLink" class="btn" target="_blank" rel="noopener">MetaMask Mobile: Add Token</a>
+    <div class="hr"></div>
+
+    <p class="small"><strong>RPC URL</strong></p>
+    <p class="mono" id="rpcText">https://virtual.mainnet.us-west.rpc.tenderly.co/69c4db98-0c54-4806-b9cf-6093ad8b8080</p>
+    <div class="row">
+      <button class="ghost" id="copyBtn">Copy RPC URL</button>
+      <button class="ghost" id="testBtn">Test RPC (HEAD)</button>
     </div>
 
-    <div id="status" class="ok"></div>
-  </div>
+    <div class="hr"></div>
 
-  <script>
-    const LOGO = "https://cloudflare-ipfs.com/ipfs/QmSy6MjU7nRPaj3J4JvdSn5HRcteWhPqKS2M3nqm7knhDQ?filename=DME-256x256.png&v=1";
-    const TOKEN = {
-      address: document.getElementById("addr").textContent.trim(),
-      symbol: document.getElementById("sym").textContent.trim(),
-      decimals: parseInt(document.getElementById("dec").textContent.trim(), 10),
-      image: LOGO
-    };
+    <div class="row">
+      <button class="primary" id="addBtn">➕ Add / Switch Network</button>
+      <button id="connectBtn">🔌 Connect Wallet</button>
+      <button id="switchBtn">🔁 Switch to Mainnet (0x1)</button>
+    </div>
 
-    const POLYGON = {
-      chainId: "0x89",
-      chainName: "Polygon POS",
-      nativeCurrency: { name: "MATIC", symbol: "MATIC", decimals: 18 },
-      rpcUrls: ["https://polygon-rpc.com"],
-      blockExplorerUrls: ["https://polygonscan.com"]
-    };
+    <div id="status" class="status">Ready.</div>
 
-    const eth = window.ethereum;
-    const st = (m)=>{ const el=document.getElementById("status"); el.textContent=m; el.style.display="block"; console.log("[STATUS]",m); };
+    <p class="foot">Tips: If MetaMask blocks adding a duplicate chain ID (0x1), open this page inside <strong>TokenPocket</strong> or your wallet’s in‑app browser and tap <em>Add / Switch Network</em> again. Many wallets accept the new RPC, even for chain 0x1.</p>
+  </main>
 
-    async function ensurePolygon() {
-      const id = await eth.request({ method: "eth_chainId" });
-      if (id !== POLYGON.chainId) {
-        try {
-          await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: POLYGON.chainId }] });
-        } catch (err) {
-          if (err?.code === 4902) {
-            await eth.request({ method: "wallet_addEthereumChain", params: [POLYGON] });
-          } else { throw err; }
-        }
+<script>
+(function(){
+  const rpcUrl = 'https://virtual.mainnet.us-west.rpc.tenderly.co/69c4db98-0c54-4806-b9cf-6093ad8b8080';
+  const chainIdHex = '0x1';
+  const addParams = {
+    chainId: chainIdHex,
+    chainName: 'Tenderly Mainnet (Virtual)',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: [rpcUrl],
+    blockExplorerUrls: ['https://etherscan.io']
+  };
+
+  const $ = (id)=>document.getElementById(id);
+  const log = (msg, cls) => {
+    const el = $('status');
+    el.textContent = (typeof msg === 'string') ? msg : JSON.stringify(msg, null, 2);
+    el.className = 'status' + (cls ? ' ' + cls : '');
+  };
+
+  async function ensureProvider(){
+    if (window.ethereum) return window.ethereum;
+    // TokenPocket legacy provider
+    if (window.tp && window.tp.isConnected) return window.tp;
+    throw new Error('No EVM provider detected. Open this page in TokenPocket/MetaMask DApp browser.');
+  }
+
+  async function connect(){
+    try{
+      const provider = await ensureProvider();
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      log(`Connected: ${accounts[0] || 'No account'}`, 'ok');
+    }catch(err){ log('Connect failed: ' + (err && err.message ? err.message : err), 'err'); }
+  }
+
+  async function addOrSwitch(){
+    try{
+      const provider = await ensureProvider();
+
+      // Try add first
+      try{
+        await provider.request({ method: 'wallet_addEthereumChain', params: [addParams] });
+        log('Network added. Switching…', 'ok');
+      }catch(addErr){
+        // If already exists or wallet forbids duplicate chain, we still attempt a switch.
+        console.warn('add error', addErr);
+        log('Add may be blocked or already present. Attempting to switch…', 'warn');
       }
+
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
+      log('Switched to Ethereum Mainnet (0x1). Your wallet should now use the Tenderly RPC.', 'ok');
+
+    }catch(err){
+      log('Add/Switch failed: ' + (err && err.message ? err.message : err), 'err');
     }
+  }
 
-    document.getElementById("connectBtn").onclick = async () => {
-      if (!eth) return st("MetaMask not detected. Open this page inside MetaMask.");
-      try {
-        await ensurePolygon();
-        const [a] = await eth.request({ method: "eth_requestAccounts" });
-        st("Connected: " + a);
-      } catch (e) { st(e?.message || "Failed to connect"); }
-    };
+  async function switchOnly(){
+    try{
+      const provider = await ensureProvider();
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
+      log('Switched to Ethereum Mainnet (0x1).', 'ok');
+    }catch(err){
+      log('Switch failed: ' + (err && err.message ? err.message : err), 'err');
+    }
+  }
 
-    document.getElementById("addBtn").onclick = async () => {
-      if (!eth) return st("MetaMask not detected. Open this page inside MetaMask.");
-      try {
-        await ensurePolygon();
-        const ok = await eth.request({
-          method: "wallet_watchAsset",
-          params: { type: "ERC20", options: TOKEN }
-        });
-        st(ok ? "DME added to MetaMask ✅" : "User dismissed the prompt.");
-      } catch (e) { st(e?.message || "Failed to add token"); }
-    };
+  async function testRpc(){
+    // Lightweight probe (no CORS preflight content) using HEAD
+    try{
+      const res = await fetch(rpcUrl, { method: 'HEAD', mode: 'no-cors' });
+      log('RPC probe sent. If your browser blocks CORS, this is expected. Try from a wallet DApp browser.', 'warn');
+    }catch(err){
+      log('RPC probe failed (likely CORS) but may still work inside your wallet browser. ' + err, 'warn');
+    }
+  }
 
-    // Deep-link for MetaMask Mobile (image may be ignored by deep link; add via button for best results)
-    const q = new URLSearchParams({
-      address: TOKEN.address,
-      symbol: TOKEN.symbol,
-      decimals: String(TOKEN.decimals),
-      chainId: "137"
-    });
-    document.getElementById("mobileLink").href = "https://metamask.app.link/add-token?" + q.toString();
-  </script>
+  $('addBtn').addEventListener('click', addOrSwitch);
+  $('connectBtn').addEventListener('click', connect);
+  $('switchBtn').addEventListener('click', switchOnly);
+  $('copyBtn').addEventListener('click', async ()=>{
+    try{ await navigator.clipboard.writeText(rpcUrl); log('RPC URL copied to clipboard.', 'ok'); }
+    catch{ log('Copy failed — select and copy manually.', 'warn'); }
+  });
+  $('testBtn').addEventListener('click', testRpc);
+})();
+</script>
 </body>
 </html>
