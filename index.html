@@ -3,75 +3,80 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>One‑Click: Add Tenderly Mainnet (Virtual) RPC</title>
-  <meta name="description" content="One‑click button to add/switch to a Tenderly Virtual Mainnet RPC in EVM wallets like TokenPocket or MetaMask." />
+  <title>One‑Click: Add RPC & Demo Flash Generator</title>
   <style>
     :root{
-      --bg:#0b1020;--card:#121732;--text:#e6e8ef;--muted:#a6adcc;--accent:#6ee7ff;--line:#272c45;--ok:#20d37a;--warn:#ffd166;--err:#ff6b6b
+      --bg:#0b1020;--card:#121732;--text:#e6e8ef;--muted:#a6adcc;--accent:#6ee7ff;--line:#2a2f4a;--ok:#20d37a;--warn:#ffd166;--err:#ff6b6b
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Sego e UI,Roboto,Inter,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
-    .card{width:min(760px,92vw);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
-    h1{font-size:22px;margin:0 0 10px}
-    p{margin:6px 0 12px;line-height:1.55;color:var(--muted)}
-    .row{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0 8px}
-    button{appearance:none;border:1px solid var(--line);background:#0f1430;color:var(--text);padding:12px 16px;border-radius:14px;font-weight:600;cursor:pointer}
-    button:hover{border-color:#3a4070}
-    .primary{background:linear-gradient(135deg,#3aa6ff,#7ef3ff);color:#071019;border-color:transparent}
-    .ghost{background:transparent}
-    code, .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace}
-    .kbd{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:12px;color:var(--muted)}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .card{width:min(880px,94vw);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
+    h1{font-size:22px;margin:0 0 8px}
+    h2{font-size:18px;margin:18px 0 8px}
+    p{margin:6px 0 10px;line-height:1.55;color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    select,input,button{appearance:none;border:1px solid var(--line);background:#0f1430;color:var(--text);padding:12px 14px;border-radius:14px;font-weight:600}
+    button{cursor:pointer}
+    button.primary{background:linear-gradient(135deg,#3aa6ff,#7ef3ff);color:#071019;border-color:transparent}
     .status{margin-top:14px;padding:12px;border:1px dashed var(--line);border-radius:12px;font-size:14px;min-height:48px;white-space:pre-wrap}
     .ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:18px 0}
-    .foot{opacity:.75;font-size:12px}
-    .small{font-size:13px;color:var(--muted)}
-    .tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;margin-right:8px}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:20px 0}
+    .note{font-size:12px;opacity:.85}
   </style>
 </head>
 <body>
   <main class="card">
-    <h1>One‑Click: Add Tenderly Mainnet (Virtual) RPC</h1>
-    <p>This button attempts to add the RPC below to your EVM wallet (TokenPocket, MetaMask, Trust Wallet, etc.) via <span class="mono">wallet_addEthereumChain</span>. If your wallet already has Ethereum Mainnet, it will try to switch to it using this RPC. Works best in an in‑app DApp browser.</p>
+    <h1>One‑Click: Add RPC to Wallet</h1>
+    <p>Select a network and click <strong>Run</strong> to connect and add/switch it in your EVM wallet (TokenPocket, MetaMask, Trust Wallet, etc.). Works best inside your wallet's DApp browser.</p>
 
-    <div class="row">
-      <span class="tag"><strong>Chain:</strong> Ethereum Mainnet (virtual)</span>
-      <span class="tag"><strong>Chain ID:</strong> 1 (0x1)</span>
-      <span class="tag"><strong>Symbol:</strong> ETH</span>
+    <div class="row" style="margin:10px 0 12px">
+      <select id="networkSelect">
+        <option value="eth">Ethereum Mainnet (Virtual)</option>
+        <option value="bsc">Binance Smart Chain (Virtual)</option>
+      </select>
+      <button class="primary" id="runBtn">▶ Run (Connect + Add/Switch)</button>
+      <button id="switchBtn">🔁 Switch Only</button>
     </div>
+
+    <div id="status" class="status" style="margin-top:12px">Ready.</div>
 
     <div class="hr"></div>
 
-    <p class="small"><strong>RPC URL</strong></p>
-    <p class="mono" id="rpcText">https://virtual.mainnet.us-west.rpc.tenderly.co/69c4db98-0c54-4806-b9cf-6093ad8b8080</p>
-    <div class="row">
-      <button class="ghost" id="copyBtn">Copy RPC URL</button>
-      <button class="ghost" id="testBtn">Test RPC (HEAD)</button>
+    <h2>Demo: Flash Generator</h2>
+    <p class="note">This is a <strong>demo</strong>. It does <em>not</em> mint or transfer any real tokens. Max amount per request is <strong>2500</strong> units. On generate, we create a random reference hash prefixed with the token and amount.</p>
+
+    <div class="row" style="margin:10px 0 8px">
+      <select id="tokenSelect">
+        <option value="USDC-bep20">USDC (BEP20)</option>
+        <option value="USDT-bep20">USDT (BEP20)</option>
+        <option value="USDC-erc20">USDC (ERC20)</option>
+        <option value="USDT-erc20">USDT (ERC20)</option>
+      </select>
+      <input id="amountInput" type="number" step="0.01" min="0" max="2500" placeholder="Amount (≤ 2500)" />
+      <button class="primary" id="genBtn">⚡ Generate</button>
+      <button id="copyHashBtn" disabled>📋 Copy Hash</button>
     </div>
+    <div id="flashOut" class="status">No hash yet.</div>
 
-    <div class="hr"></div>
-
-    <div class="row">
-      <button class="primary" id="addBtn">➕ Add / Switch Network</button>
-      <button id="connectBtn">🔌 Connect Wallet</button>
-      <button id="switchBtn">🔁 Switch to Mainnet (0x1)</button>
-    </div>
-
-    <div id="status" class="status">Ready.</div>
-
-    <p class="foot">Tips: If MetaMask blocks adding a duplicate chain ID (0x1), open this page inside <strong>TokenPocket</strong> or your wallet’s in‑app browser and tap <em>Add / Switch Network</em> again. Many wallets accept the new RPC, even for chain 0x1.</p>
   </main>
 
 <script>
 (function(){
-  const rpcUrl = 'https://virtual.mainnet.us-west.rpc.tenderly.co/69c4db98-0c54-4806-b9cf-6093ad8b8080';
-  const chainIdHex = '0x1';
-  const addParams = {
-    chainId: chainIdHex,
-    chainName: 'Tenderly Mainnet (Virtual)',
-    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: [rpcUrl],
-    blockExplorerUrls: ['https://etherscan.io']
+  const networks = {
+    eth: {
+      chainId: '0x1',
+      chainName: 'Ethereum Mainnet (Virtual)',
+      nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+      rpcUrls: ['<hidden>'],
+      blockExplorerUrls: ['https://etherscan.io']
+    },
+    bsc: {
+      chainId: '0x38',
+      chainName: 'Binance Smart Chain (Virtual)',
+      nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+      rpcUrls: ['<hidden>'],
+      blockExplorerUrls: ['https://bscscan.com']
+    }
   };
 
   const $ = (id)=>document.getElementById(id);
@@ -83,69 +88,92 @@
 
   async function ensureProvider(){
     if (window.ethereum) return window.ethereum;
-    // TokenPocket legacy provider
     if (window.tp && window.tp.isConnected) return window.tp;
-    throw new Error('No EVM provider detected. Open this page in TokenPocket/MetaMask DApp browser.');
+    throw new Error('No EVM provider detected. Open this page in MetaMask/TokenPocket DApp browser.');
   }
 
   async function connect(){
-    try{
-      const provider = await ensureProvider();
-      const accounts = await provider.request({ method: 'eth_requestAccounts' });
-      log(`Connected: ${accounts[0] || 'No account'}`, 'ok');
-    }catch(err){ log('Connect failed: ' + (err && err.message ? err.message : err), 'err'); }
+    const provider = await ensureProvider();
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    return { provider, account: accounts[0] };
   }
 
-  async function addOrSwitch(){
+  async function addOrSwitch(provider, netKey){
+    const params = networks[netKey];
     try{
-      const provider = await ensureProvider();
-
-      // Try add first
-      try{
-        await provider.request({ method: 'wallet_addEthereumChain', params: [addParams] });
-        log('Network added. Switching…', 'ok');
-      }catch(addErr){
-        // If already exists or wallet forbids duplicate chain, we still attempt a switch.
-        console.warn('add error', addErr);
-        log('Add may be blocked or already present. Attempting to switch…', 'warn');
-      }
-
-      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
-      log('Switched to Ethereum Mainnet (0x1). Your wallet should now use the Tenderly RPC.', 'ok');
-
-    }catch(err){
-      log('Add/Switch failed: ' + (err && err.message ? err.message : err), 'err');
+      await provider.request({ method: 'wallet_addEthereumChain', params: [params] });
+      log('Network added. Switching…', 'ok');
+    }catch(addErr){
+      console.warn('add error', addErr);
+      log('Add may be blocked or already present. Attempting to switch…', 'warn');
     }
+    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: params.chainId }] });
+    log('Switched to ' + params.chainName, 'ok');
   }
 
-  async function switchOnly(){
+  $('runBtn').addEventListener('click', async ()=>{
     try{
-      const provider = await ensureProvider();
-      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] });
-      log('Switched to Ethereum Mainnet (0x1).', 'ok');
-    }catch(err){
-      log('Switch failed: ' + (err && err.message ? err.message : err), 'err');
-    }
-  }
-
-  async function testRpc(){
-    // Lightweight probe (no CORS preflight content) using HEAD
-    try{
-      const res = await fetch(rpcUrl, { method: 'HEAD', mode: 'no-cors' });
-      log('RPC probe sent. If your browser blocks CORS, this is expected. Try from a wallet DApp browser.', 'warn');
-    }catch(err){
-      log('RPC probe failed (likely CORS) but may still work inside your wallet browser. ' + err, 'warn');
-    }
-  }
-
-  $('addBtn').addEventListener('click', addOrSwitch);
-  $('connectBtn').addEventListener('click', connect);
-  $('switchBtn').addEventListener('click', switchOnly);
-  $('copyBtn').addEventListener('click', async ()=>{
-    try{ await navigator.clipboard.writeText(rpcUrl); log('RPC URL copied to clipboard.', 'ok'); }
-    catch{ log('Copy failed — select and copy manually.', 'warn'); }
+      const netKey = $('networkSelect').value;
+      const { provider, account } = await connect();
+      log('Connected: ' + (account || 'N/A'), 'ok');
+      await addOrSwitch(provider, netKey);
+    }catch(err){ log('Run failed: ' + (err && err.message ? err.message : err), 'err'); }
   });
-  $('testBtn').addEventListener('click', testRpc);
+
+  $('switchBtn').addEventListener('click', async ()=>{
+    try{
+      const provider = await ensureProvider();
+      const netKey = $('networkSelect').value;
+      const params = networks[netKey];
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: params.chainId }] });
+      log('Switched to ' + params.chainName, 'ok');
+    }catch(err){ log('Switch failed: ' + (err && err.message ? err.message : err), 'err'); }
+  });
+
+  function toHex(buf){
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function sha256Hex(str){
+    try{
+      const enc = new TextEncoder();
+      const data = enc.encode(str);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return toHex(digest);
+    }catch{
+      let rnd = '';
+      for(let i=0;i<64;i++) rnd += Math.floor(Math.random()*16).toString(16);
+      return rnd;
+    }
+  }
+
+  $('genBtn').addEventListener('click', async ()=>{
+    const token = $('tokenSelect').value;
+    const amountStr = $('amountInput').value.trim();
+    const amount = Number(amountStr);
+
+    if (!amountStr){ $('flashOut').textContent = 'Enter an amount.'; return; }
+    if (isNaN(amount) || amount <= 0){ $('flashOut').textContent = 'Amount must be > 0.'; return; }
+    if (amount > 2500){ $('flashOut').textContent = 'Max amount is 2500 units for demo.'; return; }
+
+    const now = new Date().toISOString();
+    const salt = Math.random().toString(36).slice(2);
+    const seed = `${token}|${amountStr}|${now}|${salt}`;
+    const hex = await sha256Hex(seed);
+    const ref = `${token}-${amountStr}-${hex}`;
+
+    $('flashOut').textContent = ref;
+    $('flashOut').className = 'status ok';
+    $('copyHashBtn').disabled = false;
+  });
+
+  $('copyHashBtn').addEventListener('click', async ()=>{
+    try{
+      const txt = $('flashOut').textContent || '';
+      await navigator.clipboard.writeText(txt);
+      log('Hash copied to clipboard.', 'ok');
+    }catch{ log('Copy failed — select and copy manually.', 'warn'); }
+  });
 })();
 </script>
 </body>
